@@ -1,2 +1,2 @@
 # RectangularBoundingProcess
-Code for Rectangular Bounding Process (NIPS-18) to be come soon.
+Code for Rectangular Bounding Process (NIPS-18) is coming soon.
