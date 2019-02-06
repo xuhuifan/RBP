@@ -3,4 +3,6 @@ The version of Code for Rectangular Bounding Process-Relational Modelling (NeurI
 
 I am currently packing the code for RBP-Regression Tree and will upload it once available. 
 
+Please feel free to drop me a message if you find any bug or issue in the code. 
+
 
