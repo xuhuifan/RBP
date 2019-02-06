@@ -1,2 +1,5 @@
 # Rectangular Bounding Process
-Code for Rectangular Bounding Process (NIPS-18) is coming soon.
+The version of Code for Rectangular Bounding Process-Relational Modelling (NeurIPS-18) is here.
+I am currently packing the code for RBP-Regression Tree and will upload it once available. 
+
+
