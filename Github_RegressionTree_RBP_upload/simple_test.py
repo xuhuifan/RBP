@@ -1,0 +1,91 @@
+import numpy as np
+import scipy
+# import matplotlib.pyplot as plt
+import time
+import sys
+import scipy.io
+import pandas as pd
+from scipy.stats import uniform
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor
+
+from sklearn import linear_model
+
+from utilities import *
+from partition_class import *
+
+
+def Friedman_function_gen(dimNum,dataNum):
+    # Usage: generate the synthetic data through the Friedman's function
+    # Input:
+    # dimNum: number of dimensions for feature data
+    # dataNum: number of data points
+
+    xdata = uniform.rvs(size=(dataNum, dimNum))
+    ydata = 10*np.sin(xdata[:, 0]*np.pi*xdata[:, 1])+20*((xdata[:, 2]-0.5)**2)+10*xdata[:, 3]+5*xdata[:, 4]+norm.rvs(size=dataNum)
+
+    return xdata, ydata
+
+# first_arg = sys.argv[1]
+
+def test_run():
+    dataNum = 2000 # the actual training dataNum is 1000
+    dimNum = 5
+    lambdas = 1.0
+    # taus_seq = np.array([0.2, 0.5, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0])
+    # taus_seq = np.array([6.0, 7.0, 8.0, 9.0, 10.0])
+    taus = 2.0
+    testt = np.random.rand()
+
+    # for taus in taus_seq:
+    run_mainfunction(dataNum, dimNum, lambdas, taus, testt)
+
+
+
+def run_mainfunction(dataNum, dimNum, lambdas, taus, testt):
+
+    xdata, ydata = Friedman_function_gen(dimNum, dataNum)
+    train_test_ratio = 0.5 # the ratio of test data
+    xdata_train, ydata_train, xdata_test, ydata_test, ydata_train_mean, dd, hyper_sigma_1, hyper_sigma_2, variance_hat = pre_process_data(xdata, ydata, train_test_ratio)
+
+    dimLength = np.ones(dimNum)*1.0 # the length vector for all the dimensions
+
+
+    IterationTime = 1000
+
+    RBP = PartitionPatch(dimLength, dataNum, taus, lambdas, np.mean(ydata_train), variance_hat)
+    # print('Expected number of boxes is: '+str(RBP.patchNum))
+
+    predicted_value_train_seq = np.zeros((IterationTime, len(ydata_train)))
+    predicted_value_test_seq = np.zeros((IterationTime, len(ydata_test)))
+    train_RMAE_seq = np.zeros(IterationTime)
+    test_RMAE_seq = np.zeros(IterationTime)
+    Numbox = np.zeros(IterationTime)
+    lambda_seq = np.zeros(IterationTime)
+
+    for tt in range(IterationTime):
+        RBP.Metropolis_Hastings_omegas(xdata_train, ydata_train)
+        RBP.Metropolis_Hastings_A(xdata_train, ydata_train)
+        RBP.hyperparameter_update(xdata_train, ydata_train, hyper_sigma_1, hyper_sigma_2)
+        RBP.sample_patchNum(xdata_train, ydata_train)
+        RBP.hyper_sample()
+
+        tvals_train = RBP.total_judge(xdata_train)
+        predicted_value_train_seq[tt] = np.dot(tvals_train, RBP.omegas)
+        tvals_test = RBP.total_judge(xdata_test)
+        predicted_value_test_seq[tt] = np.dot(tvals_test, RBP.omegas)
+
+        train_RMAE_seq[tt] = np.mean(abs(predicted_value_train_seq[tt]-ydata_train)*dd)
+        test_RMAE_seq[tt] = np.mean(abs(predicted_value_test_seq[tt]-ydata_test)*dd)
+        Numbox[tt] = RBP.patchNum
+        lambda_seq[tt] = RBP.lambdas
+        if np.mod(tt+1, 10)==0:
+            print('============= Iteration '+str(tt+1) + ' finished. =============')
+        #     print('Number of boxes is: '+ str(RBP.patchNum))
+
+    final_RMAE_train = np.mean(((np.mean(predicted_value_train_seq[int(IterationTime/2):, :], axis=0).reshape((-1))-ydata_train.reshape((-1)))*dd)**2)
+    final_RMAE_test = np.mean(((np.mean(predicted_value_test_seq[int(IterationTime/2):, :], axis=0).reshape((-1))-ydata_test.reshape((-1)))*dd)**2)
+
+
+
+if __name__ == '__main__':
+    test_run()
