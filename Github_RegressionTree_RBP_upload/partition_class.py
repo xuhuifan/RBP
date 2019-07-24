@@ -79,6 +79,7 @@ class PartitionPatch:
 
                     if (np.log(np.random.rand()) < (new_change_ll - old_change_ll)):
                         self.patchPara[jj] = proposal_patchPara_j
+                        t_val[:, jj] = judges
 
 
     def Metropolis_Hastings_omegas(self, xdata, ydata):
